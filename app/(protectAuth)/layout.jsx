@@ -4,15 +4,19 @@ import { createClient } from "@/utils/supabase/server";
 import {NoteProvider} from "@/components/Noteprovider.jsx"
 import { getNotes } from "@/lib/notesHelper.js";
 import Loading from "@/components/Loading.jsx"
+import { GetPapers } from "@/lib/paperServer.js"
 
 export default async function ProtectedLayout({ children }) {
   const NOTES = await getNotes()
-  if(!NOTES){
+  const PAPERS = await GetPapers()
+  if(!NOTES || !PAPERS){
     return(<Loading />)
   }
+  
+  
   return(
-          <NoteProvider NOTES={NOTES}>
-           {children}
-         </NoteProvider>
+       <NoteProvider PAPERS={PAPERS} NOTES={NOTES}>
+        {children}
+      </NoteProvider>
    )
 }
