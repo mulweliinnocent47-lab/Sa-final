@@ -17,29 +17,29 @@ export async function GET(request, { params }) {
   try {
     const supabase = await createClient();
 
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Reading a note in the app is open to everyone.
+    // Downloading the .txt file (?download=1) needs a signed-in user.
+    const wantsDownload =
+      new URL(request.url).searchParams.get("download") === "1";
 
-    if (authError || !user) {
-      return new Response("Unauthorized", {
-        status: 401,
-        headers: noStoreHeaders,
-      });
+    if (wantsDownload) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        return new Response("Sign in to download", {
+          status: 401,
+          headers: noStoreHeaders,
+        });
+      }
     }
 
     // Get slug from URL
     const { slug } = await params;
 
-    console.log("API slug:", slug);
-
     // Find the note and its actual storage path
     const note = await getServerNote(slug);
-
-    console.log("API note:", note);
-    console.log("API storagePath:", note?.storagePath);
 
     if (!note) {
       return new Response("Note not found", {
@@ -77,15 +77,16 @@ export async function GET(request, { params }) {
       });
     }
 
-    console.log(
-      "Successfully downloaded:",
-      note.storagePath
-    );
+    const headers = { ...noStoreHeaders };
+    if (wantsDownload) {
+      const safeName = note.title.replace(/[\r\n"\\/]/g, "_");
+      headers["Content-Disposition"] = `attachment; filename="${safeName}.txt"`;
+    }
 
     // Return the TXT contents
     return new Response(data, {
       status: 200,
-      headers: noStoreHeaders,
+      headers,
     });
   } catch (error) {
     console.error(

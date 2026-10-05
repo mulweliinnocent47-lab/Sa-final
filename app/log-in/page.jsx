@@ -29,7 +29,10 @@ export default function Login() {
       alert(`Couldn't log in: ${error.message}`)
       return
     }
-      router.push("/")
+      // Go back to the page that asked for sign-in (same-site paths only)
+      const next = new URLSearchParams(window.location.search).get("next")
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/")
+      router.refresh()
   }
   return (
     <div className="auth-page">
@@ -45,7 +48,7 @@ export default function Login() {
         <div className="login">
           <p>
             Don't have an account?{" "}
-            <Link href="/sign-up" className="login-link">Sign up</Link>
+            <Link href={`/sign-up${typeof window !== "undefined" ? window.location.search : ""}`} className="login-link">Sign up</Link>
           </p>
         </div>
       </form>

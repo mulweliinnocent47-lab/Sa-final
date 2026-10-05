@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, FileText, Search } from "lucide-react";
+import { FileText, Search } from "lucide-react";
+import { DownloadButton } from "@/components/DownloadButton";
 import { AppShell } from "@/components/AppShell";
 import { useNotes } from "@/components/Noteprovider";
 import Loading from "@/components/Loading.jsx";
 
 export default function PapersPage() {
-  const { PAPERS } = useNotes();
+  const { PAPERS } = useNotes() ?? {};
 
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("All");
@@ -234,17 +235,14 @@ export default function PapersPage() {
             {/* DOWNLOAD */}
 
             {paper.url && (
-      <a
-          href={`/api/download?path=${encodeURIComponent(
-           paper.path
-          )}&filename=${encodeURIComponent(
-         `${paper.title || paper.name || "paper"}.pdf`
-          )}`}
-         className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
-         >
-         <Download className="size-4" />
-          Download
-     </a>
+              <DownloadButton
+                href={`/api/download?path=${encodeURIComponent(
+                  paper.path
+                )}&filename=${encodeURIComponent(
+                  `${paper.title || paper.name || "paper"}.pdf`
+                )}`}
+                className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
+              />
             )}
           </div>
         ))}

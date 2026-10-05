@@ -3,6 +3,9 @@ import { useState } from "react";
 import { CheckCircle2, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { SUBJECTS } from "@/lib/study-data";
 import { createClient } from "@/utils/supabase/client";
+import { useNotes } from "@/components/Noteprovider";
+import { SignInPrompt } from "@/components/SignInPrompt";
+import { guestLimitReached, recordGuestAiUse } from "@/lib/guestLimit";
 
 const GRADES = [12, 11];
 
@@ -46,6 +49,20 @@ function parseResult(data) {
 }
 
 export function TestYourself() {
+  const { isLoggedIn } = useNotes() ?? {};
+  const [showSignIn, setShowSignIn] = useState(false);
+
+  // Returns false (and opens the prompt) when a guest is out of free messages.
+  function allowAiUse() {
+    if (isLoggedIn) return true;
+    if (guestLimitReached()) {
+      setShowSignIn(true);
+      return false;
+    }
+    recordGuestAiUse();
+    return true;
+  }
+
   const [grade, setGrade] = useState(GRADES[0]);
   const [subject, setSubject] = useState(SUBJECTS[0]);
   const [question, setQuestion] = useState(null);
@@ -56,6 +73,7 @@ export function TestYourself() {
   const [loadError, setLoadError] = useState(null);
 
   async function generateQuestion() {
+    if (!allowAiUse()) return;
     setGenerating(true);
     setLoadError(null);
     setResult(null);
@@ -81,6 +99,7 @@ export function TestYourself() {
   async function checkAnswer() {
     const value = answer.trim();
     if (!value || !question || checking) return;
+    if (!allowAiUse()) return;
     setChecking(true);
     setLoadError(null);
     try {
@@ -100,6 +119,7 @@ export function TestYourself() {
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4 shadow-sm md:p-6">
+      <SignInPrompt open={showSignIn} reason="ai" onClose={() => setShowSignIn(false)} />
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Grade</p>

@@ -1,6 +1,8 @@
  import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 const BUCKET = "SA PDF";
 
 export async function GET(request) {
@@ -8,10 +10,12 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
 
     const path = searchParams.get("path");
-    const filename =
-      searchParams.get("filename") || "studyhub-paper.pdf";
+    // Strip characters that could break out of the header value
+    const filename = (
+      searchParams.get("filename") || "studyhub-paper.pdf"
+    ).replace(/[\r\n"\\]/g, "_");
 
-    if (!path) {
+    if (!path || path.includes("..")) {
       return NextResponse.json(
         { error: "Missing file path" },
         { status: 400 }
@@ -19,6 +23,15 @@ export async function GET(request) {
     }
 
     const supabase = await createClient();
+
+    // Only logged-in users can download papers
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { data, error } = await supabase.storage
       .from(BUCKET)

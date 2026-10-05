@@ -3,6 +3,7 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { TxtReader } from "@/components/TxtReader";
+import { DownloadButton } from "@/components/DownloadButton";
 import { getNote } from "@/lib/notesHelper";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,14 @@ export default async function NoteDetailPage({ params }) {
         <p className="mt-2 text-sm text-muted-foreground">
           {note.subject} · Grade {note.grade} · {note.minutes} min read
         </p>
+        {!note.proOnly && (
+          <DownloadButton
+            href={`${note.src}?download=1`}
+            className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-input px-3 text-sm font-medium hover:bg-muted"
+          >
+            Download .txt
+          </DownloadButton>
+        )}
       </header>
 
       {note.proOnly ? (

@@ -31,7 +31,7 @@ export default function Signup() {
         return
       }
       alert("Account created — please log in.")
-      router.push("/log-in")
+      router.push(`/log-in${window.location.search}`)
     }
   
   
@@ -52,7 +52,7 @@ export default function Signup() {
         <div className="login">
           <p>
             Already have an account?{" "}
-            <Link href="/log-in" className="login-link">Log in</Link>
+            <Link href={`/log-in${typeof window !== "undefined" ? window.location.search : ""}`} className="login-link">Log in</Link>
           </p>
         </div>
       </form>

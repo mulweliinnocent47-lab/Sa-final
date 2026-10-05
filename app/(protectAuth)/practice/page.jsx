@@ -6,11 +6,17 @@ import { TestYourself } from "@/components/TestYourself";
 import { SUBJECTS } from "@/lib/study-data";
 
 import { createClient } from "@/utils/supabase/client";
+import { genId } from "@/lib/id";
+import { useNotes } from "@/components/Noteprovider";
+import { SignInPrompt } from "@/components/SignInPrompt";
+import { guestLimitReached, recordGuestAiUse } from "@/lib/guestLimit";
 
 const STARTERS=["Explain photosynthesis like I'm in Grade 10","Quiz me on trigonometry identities","Help me brainstorm an essay on load shedding","Give me a 5-step study plan for this weekend"];
 const MODES=["Brainstorm","Explain","Quiz me","Mark my answer"];
 
 export default function PracticePage(){
+ const { isLoggedIn } = useNotes() ?? {};
+ const [showSignIn,setShowSignIn]=useState(false);
  const [view,setView]=useState("chat"); // "chat" | "test"
  const [mode,setMode]=useState(MODES[0]); const [subject,setSubject]=useState(SUBJECTS[0]); const [input,setInput]=useState(""); const [thinking,setThinking]=useState(false);
  const [messages,setMessages]=useState([{id:"welcome",role:"ai",text:"Hi 👋 I'm your practice partner. Pick a mode and a subject, then ask me anything — or throw a half-formed idea at me and we'll shape it together."}]);
@@ -22,8 +28,15 @@ export default function PracticePage(){
    const value = input.trim();
    if(!value || thinking) return;
 
+   // Guests get 3 free messages, then must sign in.
+   if(!isLoggedIn && guestLimitReached()){
+     setShowSignIn(true);
+     return;
+   }
+   if(!isLoggedIn) recordGuestAiUse();
+
    const priorHistory = messages;
-   const userMessage = { id: crypto.randomUUID(), role: "user", text: value };
+   const userMessage = { id: genId(), role: "user", text: value };
    setMessages((prev) => [...prev, userMessage]);
    setInput("");
    setThinking(true);
@@ -35,16 +48,17 @@ export default function PracticePage(){
        { body: { message: value, history: priorHistory, mode, subject } }
      );
      if (error) throw error;
-     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "ai", text: data.content }]);
+     setMessages((prev) => [...prev, { id: genId(), role: "ai", text: data.content }]);
    } catch (err) {
      console.error(err);
-     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "ai", text: "Sorry, I couldn't reach the AI just now. Please try again." }]);
+     setMessages((prev) => [...prev, { id: genId(), role: "ai", text: "Sorry, I couldn't reach the AI just now. Please try again." }]);
    } finally {
      setThinking(false);
    }
 }
 
  return <AppShell>
+  <SignInPrompt open={showSignIn} reason="ai" onClose={()=>setShowSignIn(false)} />
   <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight md:text-3xl">Practice AI</h1><span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-1 text-xs font-medium text-primary"><Sparkles className="size-3"/> UI preview</span></div>
   <p className="mt-2 text-sm text-muted-foreground">Brainstorm ideas, ask questions, get quizzed.</p>
 

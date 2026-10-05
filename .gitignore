@@ -6,3 +6,12 @@ out/
 .env*.local
 *.log
 .DS_Store
+.env.local
+node_modules
+.next ssh -T git@github.com git add . git status git commit -m Initial commit git remote add origin git@github.com:mulweliinnocent47-lab/Sa-final.git git remote set-url origin git@github.com:mulweliinnocent47-lab/Sa-final.git git branch -M main
+.next ssh -T git@github.com git add . git status git commit -m Initial commit git remote add origin git@github.com:mulweliinnocent47-lab/Sa-final.git git remote set-url origin git@github.com:mulweliinnocent47-lab/Sa-final.git git branch -M main
+.env.local
+node_modules
+.env.local
+node_modules
+.next
